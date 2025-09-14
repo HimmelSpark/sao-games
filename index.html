@@ -162,4 +162,69 @@ summary{cursor:pointer; font-weight:700; font-size:14px}
   function updateKey(){ entries.forEach((e,i)=>{ const k=inputsByRow.get(e.row)[e.keyIndex]; keyTiles[i].textContent = up(k.value||''); }); }
   function focusNext(r,i,d=+1){ const arr=inputsByRow.get(r); const n=arr[i+d]; if(n) n.focus(); }
 
-  board.addEventListener('input', e
+  board.addEventListener('input', e=>{
+    const el=e.target; if(el.tagName!=='INPUT') return;
+    const v=up(el.value).trim();
+    if(v && onlyLetter(v)){ el.value=v; focusNext(+el.dataset.partOf, +el.dataset.index, +1); tg?.HapticFeedback?.impactOccurred('light'); }
+    else el.value='';
+    updateKey();
+  });
+  board.addEventListener('keydown', e=>{
+    const el=e.target; if(el.tagName!=='INPUT') return;
+    const i=+el.dataset.index, r=+el.dataset.partOf;
+    if(e.key==='ArrowRight'){ e.preventDefault(); focusNext(r,i,+1); }
+    if(e.key==='ArrowLeft'){ e.preventDefault(); focusNext(r,i,-1); }
+    if(e.key==='Backspace' && !el.value){ e.preventDefault(); focusNext(r,i,-1); }
+  });
+
+  function setStatus(msg, ok=false){ statusEl.textContent=msg; statusEl.className='status '+(msg?(ok?'ok':'warn'):''); }
+
+  function check(correctOnly=false){
+    let allGood=true;
+    entries.forEach(e=>{
+      const arr=inputsByRow.get(e.row); let rowOk=true;
+      arr.forEach(inp=>{
+        const exp=up(inp.dataset.expected), got=up(inp.value); const cell=inp.parentElement;
+        cell.classList.remove('bad','good');
+        if(got===exp){ if(!correctOnly) cell.classList.add('good'); }
+        else { rowOk=false; if(!correctOnly) cell.classList.add('bad'); }
+      });
+      if(correctOnly && !rowOk) arr.forEach(inp=>inp.value=up(inp.dataset.expected));
+      allGood = allGood && rowOk;
+    });
+    updateKey(); return allGood;
+  }
+
+  function confetti(){
+    const N=60;
+    for(let i=0;i<N;i++){
+      const p=document.createElement('div');
+      p.style.cssText='position:fixed;width:8px;height:8px;top:-12px;left:'+(Math.random()*100)+'vw;background:hsl('+(Math.random()*360)+',90%,55%);opacity:.9;border-radius:2px;transition:transform 1.1s linear, top 1.1s ease-in;z-index:9999';
+      document.body.appendChild(p);
+      setTimeout(()=>{ p.style.top='110vh'; p.style.transform='translateY(0) rotate('+(Math.random()*360)+'deg)'; }, 30+Math.random()*120);
+      setTimeout(()=>p.remove(), 1400);
+    }
+  }
+
+  function reset(){
+    document.querySelectorAll('.cell').forEach(c=>c.classList.remove('good','bad'));
+    document.querySelectorAll('input').forEach(i=>i.value=''); updateKey(); setStatus('');
+    const first=document.querySelector('input'); first&&first.focus(); fitGrid();
+  }
+
+  document.getElementById('checkBtn').addEventListener('click', ()=>{
+    const ok=check(false);
+    const key=keyTiles.map(t=>t.textContent||'_').join('');
+    if(ok){
+      if(key===KEY_TARGET){ confetti(); setStatus(`Ключевое слово: ${KEY_TARGET}`, true); tg?.HapticFeedback?.notificationOccurred('success'); }
+      else setStatus(`Все строки верны. Ключ: ${key}`, true);
+    } else { setStatus('Проверь буквы — ошибки подсвечены.'); tg?.HapticFeedback?.impactOccurred('medium'); }
+  });
+  document.getElementById('revealBtn').addEventListener('click', ()=>{ check(true); setStatus('Подставлены правильные буквы.', true); });
+  document.getElementById('resetBtn').addEventListener('click', reset);
+
+  reset();
+})();
+</script>
+</body>
+</html>
