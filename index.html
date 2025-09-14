@@ -1,74 +1,49 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
 <title>Кроссворд САО</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-  :root{
-    --bg:#faf7f5; --ink:#222; --muted:#8a8a8a; --accent:#b8002f;
-    --ok:#1a7f37; --warn:#b3261e; --tile:#fff; --tileBorder:#d6d6d6; --keyBg:#ffe6ea;
-    --radius:14px; --gap:4px; --cell:32px; --vh:1vh;
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    margin:0; background:var(--bg); color:var(--ink);
-    font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
-    -webkit-text-size-adjust:100%;
-    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  }
-  header{ padding:12px 14px 4px }
-  h1{ margin:0; font-size:clamp(18px,5vw,24px) }
-  .sub{ color:var(--muted); margin-top:4px; font-size:13px }
-
-  main{ display:grid; grid-template-columns:1fr; gap:10px; padding:8px 10px 14px }
-
-  .boardWrap{
-    background:var(--tile); border:1px solid var(--tileBorder); border-radius:var(--radius);
-    padding:10px; box-shadow:0 6px 18px rgba(0,0,0,.04);
-  }
-  .board{
-    display:grid; gap:var(--gap); justify-content:left;
-    width:100%; max-width:100%; overflow:hidden; /* важно: не вылезать */
-    transform-origin: top left;
-  }
-  .cell{
-    width:var(--cell); height:var(--cell);
-    border-radius:10px; box-shadow: inset 0 0 0 1px var(--tileBorder);
-    background:#f1f1f1; position:relative; touch-action:manipulation;
-  }
-  .cell.input{ background:#fff }
-  .cell.key{ background:var(--keyBg) }
-  .cell input{
-    width:100%; height:100%; background:transparent; border:0; outline:none;
-    font-size:18px; font-weight:800; text-align:center; text-transform:uppercase; color:var(--ink);
-    caret-color:var(--accent);
-  }
-  .cell.bad input{ color:var(--warn) }
-  .cell.good input{ color:var(--ok) }
-  .num{ position:absolute; top:3px; left:5px; font-size:11px; color:var(--muted); user-select:none; pointer-events:none }
-
-  .keyWord{ display:flex; gap:var(--gap); justify-content:center; margin:8px 0 2px; flex-wrap:wrap }
-  .keyTile{
-    width:var(--cell); height:var(--cell); border-radius:10px; background:var(--keyBg);
-    box-shadow: inset 0 0 0 1px var(--tileBorder); display:grid; place-items:center; font-weight:900; font-size:18px;
-  }
-
-  .toolbar{ display:flex; gap:8px; padding-top:6px; flex-wrap:wrap }
-  button{
-    appearance:none; border-radius:10px; border:1px solid var(--tileBorder);
-    padding:10px 12px; background:#fff; font-weight:700; font-size:14px;
-  }
-  .primary{ background:var(--accent); color:#fff; border-color:transparent }
-  .status{ margin-top:8px; font-weight:700; font-size:14px }
-  .status.ok{ color:var(--ok) } .status.warn{ color:var(--warn) }
-
-  .legend{ background:#fff; border:1px solid var(--tileBorder); border-radius:var(--radius); padding:12px }
-  details{ border-radius:12px; border:1px dashed #d9d9d9; padding:8px 10px; margin-bottom:8px; background:#fff }
-  summary{ cursor:pointer; font-weight:700; font-size:14px }
-  .clue{ margin:6px 0 10px; padding-left:4px; font-size:13px }
+:root{
+  --bg:#f6f6f8; --ink:#1e1e1e; --muted:#8a8a8a; --accent:#2f7cf6;
+  --ok:#1a7f37; --warn:#b3261e; --tile:#fff; --tileBorder:#dadada; --keyBg:#ffe6ea;
+  --gap:4px; --cell:32px; --app-h:100svh; /* перезапишем из viewportStableHeight */
+}
+*{box-sizing:border-box} html,body{height:100%}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+  -webkit-text-size-adjust:100%;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) calc(env(safe-area-inset-bottom) + 8px) env(safe-area-inset-left);
+}
+header{padding:12px 14px 4px}
+h1{margin:0; font-size:clamp(18px,5vw,22px)}
+.sub{color:var(--muted); margin-top:4px; font-size:13px}
+main{display:grid; grid-template-columns:1fr; gap:10px; padding:8px 10px 14px; min-height:var(--app-h)}
+.boardWrap{background:var(--tile); border:1px solid var(--tileBorder); border-radius:14px; padding:10px}
+.board{
+  display:grid; gap:var(--gap); justify-content:left;
+  width:100%; max-width:100%; overflow:hidden;
+  transform-origin: top left; /* важен для масштабирования */
+}
+.cell{width:var(--cell); height:var(--cell); border-radius:10px; box-shadow: inset 0 0 0 1px var(--tileBorder); background:#f1f1f1; position:relative; touch-action:manipulation}
+.cell.input{background:#fff} .cell.key{background:var(--keyBg)}
+.cell input{width:100%; height:100%; background:transparent; border:0; outline:0; font-size:18px; font-weight:800; text-align:center; text-transform:uppercase; color:var(--ink); caret-color:var(--accent)}
+.cell.bad input{color:var(--warn)} .cell.good input{color:var(--ok)}
+.num{position:absolute; top:3px; left:5px; font-size:11px; color:#9b9b9b; user-select:none; pointer-events:none}
+.keyWord{display:flex; gap:var(--gap); justify-content:center; margin:8px 0 2px; flex-wrap:wrap}
+.keyTile{width:var(--cell); height:var(--cell); border-radius:10px; background:var(--keyBg); box-shadow: inset 0 0 0 1px var(--tileBorder); display:grid; place-items:center; font-weight:900; font-size:18px}
+.toolbar{display:flex; gap:8px; padding-top:6px; flex-wrap:wrap}
+button{appearance:none; border-radius:10px; border:1px solid var(--tileBorder); padding:10px 12px; background:#fff; font-weight:700; font-size:14px}
+.primary{background:var(--accent); color:#fff; border-color:transparent}
+.status{margin-top:8px; font-weight:700; font-size:14px}
+.status.ok{color:var(--ok)} .status.warn{color:var(--warn)}
+.legend{background:#fff; border:1px solid var(--tileBorder); border-radius:14px; padding:12px}
+details{border-radius:12px; border:1px dashed #d9d9d9; padding:8px 10px; margin-bottom:8px}
+summary{cursor:pointer; font-weight:700; font-size:14px}
+.clue{margin:6px 0 10px; padding-left:4px; font-size:13px}
 </style>
 </head>
 <body>
@@ -106,19 +81,19 @@
 (function(){
   const tg = window.Telegram?.WebApp;
   if (tg){
-    tg.expand(); tg.ready();
+    tg.ready(); tg.expand();
     tg.MainButton.setText('Проверить').show();
     tg.onEvent('mainButtonClicked', ()=>document.getElementById('checkBtn').click());
-    tg.BackButton.show();
-    tg.onEvent('backButtonClicked', ()=>document.getElementById('resetBtn').click());
-    // применяем тему клиента
-    const tp = tg.themeParams||{};
-    const root = document.documentElement.style;
-    if(tp.bg_color) root.setProperty('--bg', tp.bg_color);
-    if(tp.text_color) root.setProperty('--ink', tp.text_color);
-    if(tp.secondary_bg_color) root.setProperty('--tile', tp.secondary_bg_color);
-    if(tp.section_separator_color) root.setProperty('--tileBorder', tp.section_separator_color);
-    if(tp.button_color) root.setProperty('--accent', tp.button_color);
+    tg.BackButton.show(); tg.onEvent('backButtonClicked', ()=>document.getElementById('resetBtn').click());
+    // тема + высота по стабильному вьюпорту
+    const tp=tg.themeParams||{}, root=document.documentElement.style;
+    tp.bg_color && root.setProperty('--bg', tp.bg_color);
+    tp.text_color && root.setProperty('--ink', tp.text_color);
+    tp.secondary_bg_color && root.setProperty('--tile', tp.secondary_bg_color);
+    tp.section_separator_color && root.setProperty('--tileBorder', tp.section_separator_color);
+    tp.button_color && root.setProperty('--accent', tp.button_color);
+    const setAppH=()=>root.setProperty('--app-h', (tg.viewportStableHeight||tg.viewportHeight||window.innerHeight)+'px');
+    setAppH(); tg.onEvent('viewportChanged', setAppH); // оф. рекомендация — stable height.  [oai_citation:1‡Telegram](https://core.telegram.org/bots/webapps?utm_source=chatgpt.com)
   }
 
   const KEY_COL = 10;
@@ -142,40 +117,25 @@
   const keyWrap = document.getElementById("keyWord");
   const statusEl = document.getElementById("status");
 
-  const totalCols = Math.max(24, Math.max(...entries.map(e => (KEY_COL + (e.word.length - e.keyIndex - 1)))) + 1);
+  // вычисляем минимально необходимую сетку (чтобы не было лишних пустых колонок)
+  const starts = entries.map(e=>KEY_COL - e.keyIndex);
+  const minCol = Math.min(...starts);
+  const maxCol = Math.max(...entries.map((e,i)=>starts[i] + up(e.word).length - 1));
+  const totalCols = maxCol - minCol + 1;
   board.style.gridTemplateColumns = `repeat(${totalCols}, var(--cell))`;
 
-  // авто-подгон размера клетки и масштаб сетки
-  function fitCells(){
-    const wrap = board.getBoundingClientRect();
-    const gap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gap')) || 4;
-    const cols = totalCols;
-    const raw = (wrap.width - gap*(cols-1)) / cols;
-    const cell = Math.max(12, Math.min(Math.floor(raw), 36)); // 12–36px
-    document.documentElement.style.setProperty('--cell', cell+'px');
-
-    // дополнительный scale, если ширины совсем не хватает
-    const gridWidth = cols*cell + gap*(cols-1);
-    const scale = Math.min(1, wrap.width / gridWidth);
-    board.style.transform = `scale(${scale})`;
-  }
-  window.addEventListener('resize', fitCells);
-  tg?.onEvent?.('viewportChanged', fitCells);
-
-  // ключевые плитки
-  const keyTiles=[]; for(let i=0;i<entries.length;i++){ const t=document.createElement('div'); t.className='keyTile'; keyWrap.appendChild(t); keyTiles.push(t); }
-
-  // построение сетки
+  // построение клеток со смещением
   const inputsByRow = new Map();
   entries.forEach(e=>{
-    const startCol = KEY_COL - e.keyIndex;
+    const start = KEY_COL - e.keyIndex;
     const row = e.row, word = up(e.word);
     if(!inputsByRow.has(row)) inputsByRow.set(row, []);
     for(let i=0;i<word.length;i++){
-      const col = startCol + i;
+      const col = start + i;
       const cell = document.createElement('div');
-      cell.className = 'cell input' + (col===KEY_COL ? ' key' : '');
-      cell.style.gridColumn = col; cell.style.gridRow = row;
+      cell.className = 'cell input' + ((col===KEY_COL)?' key':'');
+      cell.style.gridColumn = (col - minCol + 1); // нормализуем в пределах сетки
+      cell.style.gridRow = row;
       const input = document.createElement('input');
       input.maxLength=1; input.inputMode='latin'; input.autocomplete='off'; input.spellcheck=false;
       input.dataset.expected = word[i]; input.dataset.partOf=row; input.dataset.index=i;
@@ -186,72 +146,24 @@
     }
   });
 
-  function updateKey(){ entries.forEach((e,i)=>{ const keyInput=inputsByRow.get(e.row)[e.keyIndex]; keyTiles[i].textContent = up(keyInput.value||''); }); }
-  function focusNext(row, idx, dir=+1){ const arr=inputsByRow.get(row); const next=arr[idx+dir]; if(next) next.focus(); }
+  // плитки ключа
+  const keyTiles=[]; for(let i=0;i<entries.length;i++){ const t=document.createElement('div'); t.className='keyTile'; keyWrap.appendChild(t); keyTiles.push(t); }
 
-  board.addEventListener('input', (ev)=>{
-    const el=ev.target; if(el.tagName!=='INPUT') return;
-    const v=up(el.value).trim();
-    if(v && onlyLetter(v)){ el.value=v; focusNext(+el.dataset.partOf, +el.dataset.index, +1); tg?.HapticFeedback?.impactOccurred('light'); }
-    else el.value='';
-    updateKey();
-  });
-  board.addEventListener('keydown', (ev)=>{
-    const el=ev.target; if(el.tagName!=='INPUT') return;
-    const i=+el.dataset.index, r=+el.dataset.partOf;
-    if(ev.key==='ArrowRight'){ ev.preventDefault(); focusNext(r,i,+1); }
-    if(ev.key==='ArrowLeft'){ ev.preventDefault(); focusNext(r,i,-1); }
-    if(ev.key==='Backspace' && !el.value){ ev.preventDefault(); focusNext(r,i,-1); }
-  });
-
-  function setStatus(msg, ok=false){ statusEl.textContent=msg; statusEl.className='status '+(msg?(ok?'ok':'warn'):''); }
-
-  function check(correctOnly=false){
-    let allGood=true;
-    entries.forEach(e=>{
-      const arr=inputsByRow.get(e.row); let rowOk=true;
-      arr.forEach(inp=>{
-        const exp=up(inp.dataset.expected), got=up(inp.value); const cell=inp.parentElement;
-        cell.classList.remove('bad','good');
-        if(got===exp){ if(!correctOnly) cell.classList.add('good'); }
-        else { rowOk=false; if(!correctOnly) cell.classList.add('bad'); }
-      });
-      if(correctOnly && !rowOk) arr.forEach(inp=>inp.value=up(inp.dataset.expected));
-      allGood = allGood && rowOk;
-    });
-    updateKey(); return allGood;
+  // адаптив: размер клетки + масштаб по ширине родителя
+  function fitGrid(){
+    const wrap = board.parentElement; // ВАЖНО: ширина родителя, не самой сетки
+    const wrapW = wrap.clientWidth;
+    const gap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gap')) || 4;
+    // пробуем «естественный» размер клетки
+    const natural = Math.floor((wrapW - gap*(totalCols-1)) / totalCols);
+    const cell = Math.max(12, Math.min(natural, 38)); // 12–38px
+    document.documentElement.style.setProperty('--cell', cell+'px');
+    const gridW = totalCols*cell + gap*(totalCols-1);
+    const scale = Math.min(1, wrapW / gridW);
+    board.style.transform = `scale(${scale})`;
   }
+  addEventListener('resize', fitGrid);
+  tg?.onEvent?.('viewportChanged', fitGrid);
 
-  function confetti(){
-    const N=70;
-    for(let i=0;i<N;i++){
-      const p=document.createElement('div');
-      p.style.cssText='position:fixed;width:8px;height:8px;top:-12px;left:'+ (Math.random()*100)+'vw;background:hsl('+ (Math.random()*360)+',90%,55%);opacity:.9;border-radius:2px;transition:transform 1.1s linear, top 1.1s ease-in;z-index:9999';
-      document.body.appendChild(p);
-      setTimeout(()=>{ p.style.top='110vh'; p.style.transform='translateY(0) rotate('+(Math.random()*360)+'deg)'; }, 30+Math.random()*120);
-      setTimeout(()=>p.remove(), 1400);
-    }
-  }
-
-  function reset(){
-    document.querySelectorAll('.cell').forEach(c=>c.classList.remove('good','bad'));
-    document.querySelectorAll('input').forEach(i=>i.value=''); updateKey(); setStatus('');
-    const first=document.querySelector('input'); first&&first.focus();
-  }
-
-  document.getElementById('checkBtn').addEventListener('click', ()=>{
-    const ok=check(false);
-    const key=keyTiles.map(t=>t.textContent||'_').join('');
-    if(ok){
-      if(key===KEY_TARGET){ confetti(); setStatus(`Ключевое слово: ${KEY_TARGET}`, true); tg?.HapticFeedback?.notificationOccurred('success'); }
-      else setStatus(`Все строки верны. Ключ: ${key}`, true);
-    } else { setStatus('Проверь буквы — ошибки подсвечены.'); tg?.HapticFeedback?.impactOccurred('medium'); }
-  });
-  document.getElementById('revealBtn').addEventListener('click', ()=>{ check(true); setStatus('Подставлены правильные буквы.', true); });
-  document.getElementById('resetBtn').addEventListener('click', reset);
-
-  reset(); fitCells();
-})();
-</script>
-</body>
-</html>
+  function updateKey(){ entries.forEach((e,i)=>{ const k=inputsByRow.get(e.row)[e.keyIndex]; keyTiles[i].textContent = up(k.value||''); }); }
+  function focusNext(r,i,d=+1){ const arr=inputsByRow.get(r); const n=arr[i+d]; if
