@@ -9,7 +9,7 @@
   :root{
     --bg:#faf7f5; --ink:#222; --muted:#8a8a8a; --accent:#b8002f;
     --ok:#1a7f37; --warn:#b3261e; --tile:#fff; --tileBorder:#d6d6d6; --keyBg:#ffe6ea;
-    --radius:14px; --gap:6px; --cell:36px; --vh:1vh;
+    --radius:14px; --gap:4px; --cell:32px; --vh:1vh;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
@@ -19,8 +19,8 @@
     -webkit-text-size-adjust:100%;
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
-  header{ padding:14px 14px 4px }
-  h1{ margin:0; font-size:clamp(18px,5vw,24px); letter-spacing:.2px }
+  header{ padding:12px 14px 4px }
+  h1{ margin:0; font-size:clamp(18px,5vw,24px) }
   .sub{ color:var(--muted); margin-top:4px; font-size:13px }
 
   main{ display:grid; grid-template-columns:1fr; gap:10px; padding:8px 10px 14px }
@@ -30,8 +30,9 @@
     padding:10px; box-shadow:0 6px 18px rgba(0,0,0,.04);
   }
   .board{
-    display:grid; gap:var(--gap); justify-content:center;
-    overflow:hidden; /* не выходим за экран */
+    display:grid; gap:var(--gap); justify-content:left;
+    width:100%; max-width:100%; overflow:hidden; /* важно: не вылезать */
+    transform-origin: top left;
   }
   .cell{
     width:var(--cell); height:var(--cell);
@@ -89,14 +90,14 @@
   </section>
 
   <aside class="legend">
-    <details open><summary>1</summary><div class="clue">Где жил «чёрный паук», и рядом зелёная ветка ведёт в центр.</div></details>
-    <details open><summary>2</summary><div class="clue">Самый северный район: самолёты ближе, чем метро, граница почти у калитки.</div></details>
-    <details open><summary>3</summary><div class="clue">Опытные поля, дендрарий и будущие агрономы у магистралей.</div></details>
-    <details open><summary>4</summary><div class="clue">Аллеи между путевым дворцом и шумом большой арены.</div></details>
+    <details open><summary>1</summary><div class="clue">Где жил «чёрный паук», рядом зелёная ветка ведёт в центр.</div></details>
+    <details open><summary>2</summary><div class="clue">Самый северный район: самолёты ближе, чем метро.</div></details>
+    <details open><summary>3</summary><div class="clue">Опытные поля и дендрарий у магистралей.</div></details>
+    <details open><summary>4</summary><div class="clue">Аллеи между путевым дворцом и большой ареной.</div></details>
     <details open><summary>5</summary><div class="clue">«Порт пяти морей» со шпилем и звёздой.</div></details>
-    <details open><summary>6</summary><div class="clue">Название с ароматом дымка; сегодня это район и станция МЦК.</div></details>
+    <details open><summary>6</summary><div class="clue">Название с ароматом дымка; район и станция МЦК.</div></details>
     <details open><summary>7</summary><div class="clue">Спорное имя у «Метрополиса» на зелёной линии.</div></details>
-    <details open><summary>8</summary><div class="clue">Платформа-ветеран и дом культуры; теперь на диаметре.</div></details>
+    <details open><summary>8</summary><div class="clue">Платформа-ветеран и дом культуры на диаметре.</div></details>
     <details open><summary>9</summary><div class="clue">Память о Ходынском поле в названии района и станции.</div></details>
   </aside>
 </main>
@@ -104,9 +105,20 @@
 <script>
 (function(){
   const tg = window.Telegram?.WebApp;
-  if (tg){ tg.expand(); tg.ready(); tg.MainButton.setText('Проверить').show();
+  if (tg){
+    tg.expand(); tg.ready();
+    tg.MainButton.setText('Проверить').show();
     tg.onEvent('mainButtonClicked', ()=>document.getElementById('checkBtn').click());
-    tg.BackButton.show(); tg.onEvent('backButtonClicked', ()=>document.getElementById('resetBtn').click());
+    tg.BackButton.show();
+    tg.onEvent('backButtonClicked', ()=>document.getElementById('resetBtn').click());
+    // применяем тему клиента
+    const tp = tg.themeParams||{};
+    const root = document.documentElement.style;
+    if(tp.bg_color) root.setProperty('--bg', tp.bg_color);
+    if(tp.text_color) root.setProperty('--ink', tp.text_color);
+    if(tp.secondary_bg_color) root.setProperty('--tile', tp.secondary_bg_color);
+    if(tp.section_separator_color) root.setProperty('--tileBorder', tp.section_separator_color);
+    if(tp.button_color) root.setProperty('--accent', tp.button_color);
   }
 
   const KEY_COL = 10;
@@ -133,20 +145,27 @@
   const totalCols = Math.max(24, Math.max(...entries.map(e => (KEY_COL + (e.word.length - e.keyIndex - 1)))) + 1);
   board.style.gridTemplateColumns = `repeat(${totalCols}, var(--cell))`;
 
-  // адаптивный размер клетки под ширину карточки
+  // авто-подгон размера клетки и масштаб сетки
   function fitCells(){
-    const wrap = board.parentElement.getBoundingClientRect();
-    const gap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gap')) || 6;
-    const cell = Math.floor((wrap.width - gap*(totalCols-1)) / totalCols);
-    const clamped = Math.max(24, Math.min(cell, 40)); // 24–40px
-    document.documentElement.style.setProperty('--cell', clamped+'px');
+    const wrap = board.getBoundingClientRect();
+    const gap = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gap')) || 4;
+    const cols = totalCols;
+    const raw = (wrap.width - gap*(cols-1)) / cols;
+    const cell = Math.max(12, Math.min(Math.floor(raw), 36)); // 12–36px
+    document.documentElement.style.setProperty('--cell', cell+'px');
+
+    // дополнительный scale, если ширины совсем не хватает
+    const gridWidth = cols*cell + gap*(cols-1);
+    const scale = Math.min(1, wrap.width / gridWidth);
+    board.style.transform = `scale(${scale})`;
   }
-  fitCells(); addEventListener('resize', fitCells);
+  window.addEventListener('resize', fitCells);
   tg?.onEvent?.('viewportChanged', fitCells);
 
   // ключевые плитки
   const keyTiles=[]; for(let i=0;i<entries.length;i++){ const t=document.createElement('div'); t.className='keyTile'; keyWrap.appendChild(t); keyTiles.push(t); }
 
+  // построение сетки
   const inputsByRow = new Map();
   entries.forEach(e=>{
     const startCol = KEY_COL - e.keyIndex;
@@ -226,7 +245,7 @@
     if(ok){
       if(key===KEY_TARGET){ confetti(); setStatus(`Ключевое слово: ${KEY_TARGET}`, true); tg?.HapticFeedback?.notificationOccurred('success'); }
       else setStatus(`Все строки верны. Ключ: ${key}`, true);
-    } else { setStatus('Проверь буквы. Ошибки подсвечены.'); tg?.HapticFeedback?.impactOccurred('medium'); }
+    } else { setStatus('Проверь буквы — ошибки подсвечены.'); tg?.HapticFeedback?.impactOccurred('medium'); }
   });
   document.getElementById('revealBtn').addEventListener('click', ()=>{ check(true); setStatus('Подставлены правильные буквы.', true); });
   document.getElementById('resetBtn').addEventListener('click', reset);
